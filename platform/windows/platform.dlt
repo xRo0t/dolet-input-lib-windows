@@ -1,30 +1,21 @@
 # ============================
 #  Platform-Specific Input Backend
 # ============================
-# Windows implementation using Win32 API
+# Windows implementation using raw Win32 bindings from library/platform/windows.
 # 
 # This file contains all platform-specific code for input handling.
 # For cross-platform support, create alternative versions:
-#   - platform.dlt (Windows) - current file
-#   - platform_linux.dlt (Linux/X11)
-#   - platform_macos.dlt (macOS/Cocoa)
+#   - platform/windows/platform.dlt
+#   - platform/linux/platform.dlt
+#   - platform/macos/platform.dlt
 #
 # All platform files must export the same interface:
 #   - POINT struct
 #   - platform_get_key_state(key: i32) -> i16
 #   - platform_get_cursor_pos(point: i64) -> i32
 
-# ----- Win32 Extern Functions -----
-extern lib "user32":
-    fun GetAsyncKeyState(vKey: i32) -> i16
-    fun GetCursorPos(lpPoint: i64) -> i32
-
-# ----- POINT Structure -----
-# Win32 POINT structure for cursor position
-# Same structure needed on all platforms
-struct POINT:
-    x: i32 = 0
-    y: i32 = 0
+import sys.windows.win32.types
+import sys.windows.win32.user32
 
 # ----- Platform API Wrappers -----
 # These functions provide a consistent interface across platforms

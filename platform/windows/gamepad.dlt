@@ -4,10 +4,7 @@
 # Gamepad button constants and input functions
 # Requirements: 6.1-6.6, 7.1-7.7
 
-# ----- XInput Extern Functions -----
-# Requirements: 7.1
-extern lib "xinput1_4":
-    fun XInputGetState(dwUserIndex: i32, pState: i64) -> i32
+import sys.windows.win32.xinput
 
 # ----- XINPUT_GAMEPAD Structure -----
 # XInput gamepad state structure

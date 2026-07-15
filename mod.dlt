@@ -6,11 +6,11 @@
 #
 # Usage: import input
 module input
-load input/platform
+load input/platform/{platform}/platform
 load input/keys
 load input/mouse
 load input/chars
-load input/gamepad
+load input/platform/{platform}/gamepad
 load input/input
 
 # Exported structs
