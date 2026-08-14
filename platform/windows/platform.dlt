@@ -22,6 +22,10 @@ import sys.windows.win32.user32
 
 # Get the state of a virtual key
 # Returns: i16 with high bit set (negative) if key is pressed
+fun platform_refresh_key_state():
+    # Win32 GetAsyncKeyState is queried directly for each key.
+    return
+
 fun platform_get_key_state(key: i32) -> i16:
     return GetAsyncKeyState(key)
 

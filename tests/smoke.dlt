@@ -1,0 +1,10 @@
+import input
+
+fun main() -> i32:
+    # The adapter must remain safe when no desktop session is available (for
+    # example CI or a headless server). Native queries then report idle input.
+    input_init()
+    input_update()
+    if key_pressed(300) != 0:
+        return 1
+    return 0

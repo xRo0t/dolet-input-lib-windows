@@ -5,13 +5,8 @@
 # Usage: Input.is_key_pressed(KEY_ESCAPE)
 # Requirements: 2.1-2.5, 4.1-4.9, 5.1-5.5, 8.1-8.4, 9.1-9.5
 
-# Import key constants
-import keys
-import mouse
-import gamepad
-
-# Import platform-specific backend
-import platform
+# keys, mouse, gamepad and the selected platform backend are loaded by
+# input/mod.dlt into this same module before this file.
 
 # ----- Global State Variables -----
 g_input_initialized: i32 = 0
@@ -106,6 +101,7 @@ fun copy_current_to_previous():
     g_keys_previous_3 = g_keys_current_3
 
 fun update_key_states():
+    platform_refresh_key_state()
     g_keys_current_0 = 0
     g_keys_current_1 = 0
     g_keys_current_2 = 0

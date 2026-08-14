@@ -4,9 +4,8 @@
 # Mouse button constants and input functions
 # Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1-4.9
 
-# Import platform-specific backend
-# This provides: platform_get_key_state(), platform_get_cursor_pos(), POINT
-import platform
+# The package root loads the platform backend before this file, so its
+# platform_get_* functions and POINT type are already in this module.
 
 # ----- Mouse Button Constants -----
 # Requirements: 3.1, 3.2, 3.3, 3.4, 3.5

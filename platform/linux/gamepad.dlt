@@ -1,0 +1,42 @@
+# ============================================================================
+# Linux gamepad capability fallback
+# ============================================================================
+# Keyboard and mouse are implemented by platform.dlt. A future evdev backend
+# can replace these disconnected results without changing the public API.
+
+struct XINPUT_GAMEPAD:
+    wButtons: i16 = 0
+    bLeftTrigger: i8 = 0
+    bRightTrigger: i8 = 0
+    sThumbLX: i16 = 0
+    sThumbLY: i16 = 0
+    sThumbRX: i16 = 0
+    sThumbRY: i16 = 0
+
+struct XINPUT_STATE:
+    dwPacketNumber: i32 = 0
+    Gamepad: XINPUT_GAMEPAD = XINPUT_GAMEPAD()
+
+fun gamepad_connected(player: i32) -> i32:
+    return 0
+
+fun gamepad_pressed(player: i32, button: i32) -> i32:
+    return 0
+
+fun gamepad_just_pressed(player: i32, button: i32) -> i32:
+    return 0
+
+fun gamepad_just_released(player: i32, button: i32) -> i32:
+    return 0
+
+fun gamepad_stick_x(player: i32, stick: i32) -> f32:
+    return 0.0
+
+fun gamepad_stick_y(player: i32, stick: i32) -> f32:
+    return 0.0
+
+fun gamepad_trigger(player: i32, trigger: i32) -> f32:
+    return 0.0
+
+fun update_gamepad():
+    return

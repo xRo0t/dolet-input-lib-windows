@@ -3,8 +3,8 @@
 
 [info]
 name = input
-version = 1.1.0
-description = Keyboard, mouse (with drag state), gamepad, and typed-character input for Dolet
+version = 1.2.0
+description = Portable keyboard, mouse, drag, gamepad, and typed-character input for Dolet with native Windows and X11 adapters
 
 [libs]
 # No external libraries needed
@@ -14,3 +14,7 @@ description = Keyboard, mouse (with drag state), gamepad, and typed-character in
 
 [dependencies]
 # No external dependencies
+
+[link.linux]
+# The Linux keyboard and pointer adapter queries X11 directly.
+flags = -lX11
