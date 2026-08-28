@@ -1,229 +1,26 @@
 # ============================================================================
-# Linux X11 input backend
+# Linux input adapter
 # ============================================================================
-# The public input package keeps stable, platform-neutral key identifiers. This
-# adapter translates them to X11 KeySyms and snapshots the 256-bit X11 keymap
-# once per input frame, avoiding one X server round-trip per key.
-
-import sys.linux.x11
+# Window owns the selected display-server backend and its event snapshot.
+# Input consumes that stable API, so native Wayland and X11 behave identically.
 
 @stack
 struct POINT:
     x: i32 = 0
     y: i32 = 0
 
-g_input_x11_display: i64 = 0
-g_input_x11_root: i64 = 0
-g_input_x11_keymap: i64 = 0
-g_input_x11_pointer: i64 = 0
-g_input_x11_pointer_mask: i32 = 0
-
-fun _linux_input_init() -> i32:
-    if g_input_x11_display != 0:
-        return 1
-    g_input_x11_display = XOpenDisplay(0)
-    if g_input_x11_display == 0:
-        return 0
-    screen: i32 = XDefaultScreen(g_input_x11_display)
-    g_input_x11_root = XRootWindow(g_input_x11_display, screen)
-    g_input_x11_keymap = Memory.malloc_zeroed(32)
-    g_input_x11_pointer = Memory.malloc_zeroed(40)
-    if g_input_x11_keymap == 0 or g_input_x11_pointer == 0:
-        if g_input_x11_keymap != 0:
-            Memory.free(g_input_x11_keymap)
-        if g_input_x11_pointer != 0:
-            Memory.free(g_input_x11_pointer)
-        XCloseDisplay(g_input_x11_display)
-        g_input_x11_display = 0
-        g_input_x11_root = 0
-        g_input_x11_keymap = 0
-        g_input_x11_pointer = 0
-        return 0
-    return 1
-
-fun _linux_query_pointer() -> i32:
-    if _linux_input_init() == 0:
-        return 0
-    result: i32 = XQueryPointer(
-        g_input_x11_display,
-        g_input_x11_root,
-        g_input_x11_pointer,
-        g_input_x11_pointer + 8,
-        g_input_x11_pointer + 16,
-        g_input_x11_pointer + 20,
-        g_input_x11_pointer + 24,
-        g_input_x11_pointer + 28,
-        g_input_x11_pointer + 32
-    )
-    if result == 0:
-        g_input_x11_pointer_mask = 0
-        return 0
-    g_input_x11_pointer_mask = Memory.read_i32(g_input_x11_pointer + 32)
-    return 1
-
 fun platform_refresh_key_state():
-    if _linux_input_init() == 0:
-        return
-    XQueryKeymap(g_input_x11_display, g_input_x11_keymap)
-    _linux_query_pointer()
-
-fun _linux_key_to_keysym(key: i32) -> i64:
-    # A-Z use lower-case X KeySyms; shift state is tracked separately.
-    if key >= 65 and key <= 90:
-        return (key + 32) as i64
-    if key >= 48 and key <= 57:
-        return key as i64
-    if key >= 112 and key <= 123:
-        return (65470 + key - 112) as i64
-
-    if key == 37:
-        return 65361
-    if key == 38:
-        return 65362
-    if key == 39:
-        return 65363
-    if key == 40:
-        return 65364
-
-    if key == 16 or key == 160:
-        return 65505
-    if key == 161:
-        return 65506
-    if key == 17 or key == 162:
-        return 65507
-    if key == 163:
-        return 65508
-    if key == 18 or key == 164:
-        return 65513
-    if key == 165:
-        return 65514
-    if key == 91:
-        return 65515
-    if key == 92:
-        return 65516
-
-    if key == 27:
-        return 65307
-    if key == 32:
-        return 32
-    if key == 13:
-        return 65293
-    if key == 9:
-        return 65289
-    if key == 8:
-        return 65288
-    if key == 46:
-        return 65535
-    if key == 45:
-        return 65379
-    if key == 36:
-        return 65360
-    if key == 35:
-        return 65367
-    if key == 33:
-        return 65365
-    if key == 34:
-        return 65366
-    if key == 20:
-        return 65509
-    if key == 144:
-        return 65407
-    if key == 145:
-        return 65300
-    if key == 44:
-        return 65377
-    if key == 19:
-        return 65299
-
-    if key >= 96 and key <= 105:
-        return (65456 + key - 96) as i64
-    if key == 107:
-        return 65451
-    if key == 109:
-        return 65453
-    if key == 106:
-        return 65450
-    if key == 111:
-        return 65455
-    if key == 110:
-        return 65454
-
-    if key == 188:
-        return 44
-    if key == 190:
-        return 46
-    if key == 191:
-        return 47
-    if key == 186:
-        return 59
-    if key == 222:
-        return 39
-    if key == 219:
-        return 91
-    if key == 221:
-        return 93
-    if key == 220:
-        return 92
-    if key == 189:
-        return 45
-    if key == 187:
-        return 61
-    if key == 192:
-        return 96
-    return 0
-
-fun _linux_keysym_down(keysym: i64) -> i32:
-    if keysym == 0 or g_input_x11_display == 0 or g_input_x11_keymap == 0:
-        return 0
-    keycode: i32 = XKeysymToKeycode(g_input_x11_display, keysym)
-    if keycode <= 0 or keycode >= 256:
-        return 0
-    byte_index: i32 = keycode / 8
-    bit_index: i32 = keycode % 8
-    value: i32 = Memory.read_i8(g_input_x11_keymap + (byte_index as i64)) & 255
-    if (value & (1 << bit_index)) != 0:
-        return 1
-    return 0
+    # Window.poll() already drains and snapshots native events once per frame.
+    return
 
 fun platform_get_key_state(key: i32) -> i16:
-    # Mouse identifiers preserve the existing input package ABI.
-    if key == 1:
-        if (g_input_x11_pointer_mask & 256) != 0:
-            return (0 - 32768) as i16
-        return 0
-    if key == 2:
-        if (g_input_x11_pointer_mask & 1024) != 0:
-            return (0 - 32768) as i16
-        return 0
-    if key == 4:
-        if (g_input_x11_pointer_mask & 512) != 0:
-            return (0 - 32768) as i16
-        return 0
-
-    # Generic modifiers include either side.
-    if key == 16:
-        if _linux_keysym_down(65505) == 1 or _linux_keysym_down(65506) == 1:
-            return (0 - 32768) as i16
-        return 0
-    if key == 17:
-        if _linux_keysym_down(65507) == 1 or _linux_keysym_down(65508) == 1:
-            return (0 - 32768) as i16
-        return 0
-    if key == 18:
-        if _linux_keysym_down(65513) == 1 or _linux_keysym_down(65514) == 1:
-            return (0 - 32768) as i16
-        return 0
-
-    keysym: i64 = _linux_key_to_keysym(key)
-    if _linux_keysym_down(keysym) == 1:
+    if window_key_down(key) == 1:
         return (0 - 32768) as i16
     return 0
 
 fun platform_get_cursor_pos(point: i64) -> i32:
     if point == 0:
         return 0
-    if _linux_query_pointer() == 0:
-        return 0
-    Memory.write_i32(point, Memory.read_i32(g_input_x11_pointer + 16))
-    Memory.write_i32(point + 4, Memory.read_i32(g_input_x11_pointer + 20))
+    Memory.write_i32(point, window_client_mouse_x(Window.handle()))
+    Memory.write_i32(point + 4, window_client_mouse_y(Window.handle()))
     return 1

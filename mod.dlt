@@ -6,6 +6,7 @@
 #
 # Usage: import input
 module input
+import window
 load input/platform/{platform}/platform
 load input/keys
 load input/mouse
